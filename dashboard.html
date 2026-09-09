@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard — Lone Management</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="container">
+    <h1>Dashboard</h1>
+    <div class="grid" id="stats">
+      <div class="card stat"><div class="label">Total Loans</div><div class="value" id="totalLoans">—</div></div>
+      <div class="card stat"><div class="label">Active Loans</div><div class="value" id="activeLoans">—</div></div>
+      <div class="card stat"><div class="label">Overdue</div><div class="value" id="overdueLoans">—</div></div>
+      <div class="card stat"><div class="label">Total Outstanding</div><div class="value" id="totalOutstanding">—</div></div>
+    </div>
+
+    <div class="card">
+      <div class="flex-between">
+        <h2>Recent Loans</h2>
+        <a href="loans.html" class="btn">View all loans</a>
+      </div>
+      <table>
+        <thead><tr><th>Loan</th><th>Borrower</th><th>Balance Due</th><th>Status</th></tr></thead>
+        <tbody id="recentLoans"><tr><td colspan="4" class="muted">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
