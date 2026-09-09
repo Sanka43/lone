@@ -17,7 +17,7 @@ Browser (GitHub Pages) --fetch(JSON)--> Apps Script Web App --> Google Sheet
 1. Go to [sheets.google.com](https://sheets.google.com) and create a new blank spreadsheet. Name it e.g. "Lone Management DB".
 2. In the sheet, open **Extensions → Apps Script**.
 3. Delete the default `Code.gs` content and paste in the contents of [`apps-script/Code.gs`](apps-script/Code.gs) from this repo.
-4. In the Apps Script editor, select the function `initSheets` from the dropdown next to the Run button, and click **Run**. Approve the permissions prompt (it needs access to the spreadsheet). This creates the `Users`, `Sessions`, `Borrowers`, `Loans`, `Payments` tabs and one default login:
+4. In the Apps Script editor, select the function `initSheets` from the dropdown next to the Run button, and click **Run**. Approve the permissions prompt (it needs access to the spreadsheet). This creates the `Users`, `Borrowers`, `Loans`, `Payments` tabs and one default login:
    - Username: `admin`
    - Password: `admin123`
 
@@ -71,8 +71,11 @@ Your site will be live at `https://<your-username>.github.io/<repo-name>/`.
 ## Notes / limitations
 
 - The Apps Script Web App URL is public. Every write action requires a valid session token
-  (checked against the `Sessions` sheet), but the login endpoint itself is rate-limit-free —
+  (checked against `CacheService`, not a Sheet — this keeps auth checks fast regardless of how
+  many people have ever logged in), but the login endpoint itself is rate-limit-free —
   fine for a small internal tool, not meant for a large public-facing product.
-- Sessions expire after 12 hours (`SESSION_HOURS` in `Code.gs`).
+- Sessions expire after 6 hours (`SESSION_SECONDS` in `Code.gs` — 6h is `CacheService`'s max TTL).
+  If you had already run an older version of this script, you can delete the leftover `Sessions`
+  sheet tab — it's no longer used.
 - If you edit `Code.gs`, redeploy: **Deploy → Manage deployments → edit (pencil) → New version → Deploy**.
   The `/exec` URL stays the same.

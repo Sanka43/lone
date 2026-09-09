@@ -5,11 +5,10 @@
  */
 
 var SS = SpreadsheetApp.getActiveSpreadsheet();
-var SESSION_HOURS = 12;
+var SESSION_SECONDS = 6 * 60 * 60; // 6 hours — CacheService's max TTL
 
 var SHEETS = {
   USERS: 'Users',
-  SESSIONS: 'Sessions',
   BORROWERS: 'Borrowers',
   LOANS: 'Loans',
   PAYMENTS: 'Payments'
@@ -18,7 +17,6 @@ var SHEETS = {
 /** Run this once manually from the Apps Script editor to set up the Sheet. */
 function initSheets() {
   createSheetIfMissing_(SHEETS.USERS, ['Username', 'PasswordHash', 'CreatedAt']);
-  createSheetIfMissing_(SHEETS.SESSIONS, ['Token', 'Username', 'ExpiresAt']);
   createSheetIfMissing_(SHEETS.BORROWERS, ['BorrowerID', 'Name', 'NIC', 'Phone', 'Address', 'CreatedAt']);
   createSheetIfMissing_(SHEETS.LOANS, ['LoanID', 'BorrowerID', 'Principal', 'InterestRate', 'LoanDate', 'DueDate', 'Term', 'Notes', 'Closed']);
   createSheetIfMissing_(SHEETS.PAYMENTS, ['PaymentID', 'LoanID', 'Amount', 'PaymentDate', 'Method', 'Note']);
@@ -124,8 +122,7 @@ function login_(username, password) {
   for (var i = 1; i < rows.length; i++) {
     if (rows[i][0] === username && rows[i][1] === hash_(password)) {
       var token = Utilities.getUuid();
-      var expires = new Date(Date.now() + SESSION_HOURS * 3600 * 1000);
-      SS.getSheetByName(SHEETS.SESSIONS).appendRow([token, username, expires]);
+      CacheService.getScriptCache().put(token, username, SESSION_SECONDS);
       return { ok: true, token: token, username: username };
     }
   }
@@ -134,15 +131,9 @@ function login_(username, password) {
 
 function requireAuth_(token) {
   if (!token) throw new Error('Not authenticated');
-  var sh = SS.getSheetByName(SHEETS.SESSIONS);
-  var rows = sh.getDataRange().getValues();
-  for (var i = 1; i < rows.length; i++) {
-    if (rows[i][0] === token) {
-      if (new Date(rows[i][2]) < new Date()) throw new Error('Session expired');
-      return rows[i][1];
-    }
-  }
-  throw new Error('Not authenticated');
+  var username = CacheService.getScriptCache().get(token);
+  if (!username) throw new Error('Not authenticated');
+  return username;
 }
 
 // ---------- Borrowers ----------
@@ -329,6 +320,7 @@ function getDashboard_() {
     totalLoans: loans.length,
     activeLoans: active.length,
     overdueLoans: overdue.length,
-    totalOutstanding: round2_(outstanding)
+    totalOutstanding: round2_(outstanding),
+    loans: loans // avoids a second getLoans round trip just to show "recent loans"
   };
 }
