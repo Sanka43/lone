@@ -25,16 +25,23 @@ function requireLogin() {
 
 async function apiCall(action, params) {
   if (!API_URL || API_URL.indexOf('PASTE_YOUR') === 0) {
-    throw new Error('API_URL is not configured yet — edit js/config.js');
+    return { ok: false, error: 'API_URL is not configured yet — edit js/config.js' };
   }
+
   const body = Object.assign({ action: action, token: getToken() }, params || {});
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(body)
-  });
-  const data = await res.json();
-  if (data.ok === false && data.error === 'Not authenticated') {
+  let res, data;
+  try {
+    res = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(body)
+    });
+    data = await res.json();
+  } catch (err) {
+    return { ok: false, error: 'Could not reach the server: ' + err.message };
+  }
+
+  if (data.ok === false && /not authenticated|session expired/i.test(data.error || '')) {
     clearSession();
     window.location.href = 'index.html';
     return;
